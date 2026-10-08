@@ -49,10 +49,11 @@ def restore_environment(source: Path, dry_run: bool = False) -> list[list[str]]:
         )
 
     commands = []
+    commands += apt_repo_restore(manifest.repositories.get("apt_ppas", []))
+
     for manager, packages in manifest.packages.items():
         commands += _restore_package_manager(manager, packages)
 
-    commands += apt_repo_restore(manifest.repositories.get("apt_ppas", []))
     commands += snap_restore(manifest.snap)
     commands += flatpak_restore(manifest.flatpaks)
 
