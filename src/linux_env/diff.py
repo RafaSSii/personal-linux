@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+import hashlib
 from typing import Any
 
 from .detect import detect
@@ -15,10 +16,15 @@ class DiffSection:
     name: str
     added: list[str]
     removed: list[str]
+    modified: list[str] | None = None
+
+    def __post_init__(self) -> None:
+        if self.modified is None:
+            self.modified = []
 
     @property
     def changed(self) -> bool:
-        return bool(self.added or self.removed)
+        return bool(self.added or self.removed or self.modified)
 
 
 def _names(items: list[Any], key: str) -> set[str]:
@@ -37,6 +43,13 @@ def compare_sets(name: str, expected: set[str], actual: set[str]) -> DiffSection
         added=sorted(actual - expected),
         removed=sorted(expected - actual),
     )
+
+
+def _sha256(path: Path) -> str | None:
+    try:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError:
+        return None
 
 
 def compare_manifest_to_system(source: Path) -> tuple[dict[str, Any], list[DiffSection]]:
@@ -63,12 +76,29 @@ def compare_manifest_to_system(source: Path) -> tuple[dict[str, Any], list[DiffS
 
     expected_dotfiles = set(manifest.dotfiles)
     dotfiles_root = source / "dotfiles"
-    actual_dotfiles = {
-        str(path.relative_to(dotfiles_root))
-        for path in dotfiles_root.rglob("*")
-        if path.is_file()
-    } if dotfiles_root.exists() else set()
-    sections.append(compare_sets("Dotfiles", expected_dotfiles, actual_dotfiles))
+    actual_dotfiles = set()
+    modified_dotfiles = []
+
+    for relative in expected_dotfiles:
+        backup = dotfiles_root / relative
+        current_file = Path.home() / relative
+
+        if not current_file.exists():
+            continue
+        actual_dotfiles.add(relative)
+
+        if _sha256(backup) != _sha256(current_file):
+            modified_dotfiles.append(relative)
+
+    missing = expected_dotfiles - actual_dotfiles
+    sections.append(
+        DiffSection(
+            name="Dotfiles",
+            added=[],
+            removed=sorted(missing),
+            modified=sorted(modified_dotfiles),
+        )
+    )
 
     system_changes = {}
     for key in ("distro", "version", "architecture", "desktop"):
