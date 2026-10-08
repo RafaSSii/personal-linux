@@ -16,7 +16,7 @@ def export_ppas() -> list[str]:
         )
 
     ppas: set[str] = set()
-    pattern = re.compile(r"ppa\.launchpadcontent\.net/([^/]+)/([^/]+)")
+    pattern = re.compile(r"(?:ppa\.launchpadcontent\.net|ppa\.launchpad\.net)/([^/]+)/([^/]+)")
 
     for source_file in source_files:
         try:
@@ -35,8 +35,14 @@ def export_ppas() -> list[str]:
 
 
 def restore_commands(ppas: list[str]) -> list[list[str]]:
+    if not ppas:
+        return []
+
     return [
-        ["sudo", "add-apt-repository", "-y", ppa]
-        for ppa in ppas
-        if ppa.startswith("ppa:")
+        ["sudo", "apt-get", "install", "-y", "software-properties-common"],
+        *[
+            ["sudo", "add-apt-repository", "-y", ppa]
+            for ppa in ppas
+            if ppa.startswith("ppa:")
+        ],
     ]
