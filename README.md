@@ -4,7 +4,7 @@ Portable Linux environment backup, synchronization and restore tool.
 
 O objetivo é transformar um ambiente Linux em um manifesto declarativo que possa ser restaurado em outra instalação, sem tentar clonar o sistema operacional inteiro.
 
-## v0.2.0 — Ubuntu
+## v0.3.0 — Ubuntu + Apply
 
 A primeira implementação específica para Ubuntu inclui:
 
