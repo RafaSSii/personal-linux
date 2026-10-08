@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "linux-env"
-version = "0.2.0"
+version = "0.3.0"
 description = "Portable Linux environment backup, synchronization and restore tool"
 readme = "README.md"
 requires-python = ">=3.10"
