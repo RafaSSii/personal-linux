@@ -87,7 +87,7 @@ linux-env restore ./meu-ubuntu
 
 O `--dry-run` apenas mostra os comandos. Sem ele, os comandos são executados.
 
-## O que é salvo no Ubuntu
+## Diff e detecção de drift\n\nDepois de restaurar ou alterar a máquina, compare o estado atual com um backup salvo:\n\n```bash\nlinux-env diff ./meu-ubuntu\n```\n\nO comando verifica APT, Snap, Flatpak, PPAs e dotfiles. Para arquivos de configuração, ele também compara o conteúdo usando SHA-256 e marca arquivos modificados com `~`.\n\nExemplo:\n\n```text\nAPT packages:\n  + neovim\n  - vlc\n\nSnap:\n  + code\n\nDotfiles:\n  ~ .gitconfig\n\n```\n\nIsso transforma o manifesto em uma referência do estado desejado, permitindo detectar **drift** entre a máquina e o ambiente salvo.\n\n## O que é salvo no Ubuntu
 
 ### APT
 
