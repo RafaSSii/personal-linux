@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "linux-env"
+version = "0.1.0"
+description = "Portable Linux environment backup, synchronization and restore tool"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["PyYAML>=6.0"]
+
+[project.scripts]
+linux-env = "linux_env.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
