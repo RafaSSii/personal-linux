@@ -30,10 +30,9 @@ def _mock_ubuntu(monkeypatch, packages):
         "linux_env.core.detect",
         lambda: {"distro": "ubuntu"},
     )
-    monkeypatch.setattr(
-        "linux_env.core.export_packages",
-        lambda: ("apt-get", packages),
-    )
+    export_packages = lambda: ("apt-get", packages)
+    monkeypatch.setattr("linux_env.core.export_packages", export_packages)
+    monkeypatch.setattr("linux_env.diff.export_packages", export_packages)
     monkeypatch.setattr("linux_env.core.export_snaps", lambda: [])
     monkeypatch.setattr("linux_env.core.export_flatpaks", lambda: [])
     monkeypatch.setattr("linux_env.core.export_ppas", lambda: [])
@@ -93,10 +92,12 @@ def test_apply_executes_after_confirmation(monkeypatch, tmp_path):
     _mock_ubuntu(monkeypatch, ["git"])
 
     executed = []
-    monkeypatch.setattr(
-        "linux_env.core.subprocess.run",
-        lambda command, check: executed.append(command),
-    )
+    class SubprocessStub:
+        @staticmethod
+        def run(command, check):
+            executed.append(command)
+
+    monkeypatch.setattr("linux_env.core.subprocess", SubprocessStub)
 
     result = apply_environment(
         tmp_path,
