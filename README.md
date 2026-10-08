@@ -18,41 +18,6 @@ A primeira implementação específica para Ubuntu inclui:
 - proteção contra restaurar um manifesto Ubuntu em uma distro diferente;
 - `restore --dry-run` para revisar os comandos antes de executá-los.
 
-### Exemplo de manifesto
-
-```yaml
-schema: 2
-system:
-  distro: ubuntu
-  version: "24.04"
-  architecture: amd64
-
-packages:
-  apt:
-    - curl
-    - git
-    - neovim
-    - python3
-    - build-essential
-
-snap:
-  - name: code
-    channel: latest/stable
-    classic: true
-
-flatpaks:
-  - app_id: org.mozilla.firefox
-    remote: flathub
-
-repositories:
-  apt_ppas:
-    - ppa:example/tool
-
-dotfiles:
-  - .bashrc
-  - .gitconfig
-```
-
 ## Instalação
 
 ```bash
@@ -70,14 +35,6 @@ linux-env detect
 linux-env save ./meu-ubuntu
 ```
 
-Isso cria:
-
-```text
-meu-ubuntu/
-├── manifest.yaml
-└── dotfiles/
-```
-
 Na máquina de destino:
 
 ```bash
@@ -85,19 +42,47 @@ linux-env restore ./meu-ubuntu --dry-run
 linux-env restore ./meu-ubuntu
 ```
 
-O `--dry-run` apenas mostra os comandos. Sem ele, os comandos são executados.
+## Diff
 
-## Diff e detecção de drift\n\nDepois de restaurar ou alterar a máquina, compare o estado atual com um backup salvo:\n\n```bash\nlinux-env diff ./meu-ubuntu\n```\n\nO comando verifica APT, Snap, Flatpak, PPAs e dotfiles. Para arquivos de configuração, ele também compara o conteúdo usando SHA-256 e marca arquivos modificados com `~`.\n\nExemplo:\n\n```text\nAPT packages:\n  + neovim\n  - vlc\n\nSnap:\n  + code\n\nDotfiles:\n  ~ .gitconfig\n\n```\n\nIsso transforma o manifesto em uma referência do estado desejado, permitindo detectar **drift** entre a máquina e o ambiente salvo.\n\n## O que é salvo no Ubuntu
+Compare o estado atual com um manifesto salvo:
+
+```bash
+linux-env diff ./meu-ubuntu
+```
+
+O comando verifica APT, Snap, Flatpak, PPAs e dotfiles. Para arquivos de configuração, compara o conteúdo usando SHA-256 e marca arquivos modificados com `~`.
+
+## Apply
+
+O `apply` transforma o manifesto em estado desejado e tenta reconciliar a máquina atual com ele:
+
+```bash
+linux-env apply ./meu-ubuntu --dry-run
+linux-env apply ./meu-ubuntu
+linux-env apply ./meu-ubuntu --yes
+```
+
+Por segurança, o primeiro comando apenas exibe o plano. Sem `--dry-run`, o CLI executa instalações normalmente, mas pede confirmação antes de operações destrutivas, como:
+
+- remover pacotes APT;
+- remover Snaps;
+- remover Flatpaks;
+- remover PPAs;
+- sobrescrever dotfiles modificados.
+
+`--yes` pula somente essa confirmação. Ele não altera o conteúdo do manifesto nem ignora a validação de distro.
+
+## O que é salvo no Ubuntu
 
 ### APT
 
-São salvos os pacotes marcados como instalação manual. Dependências instaladas automaticamente não entram no manifesto, deixando o backup mais limpo e portátil.
+São salvos os pacotes marcados como instalação manual. Dependências instaladas automaticamente não entram no manifesto.
 
-PPAs ativos do Launchpad são detectados quando aparecem nos arquivos de fontes do APT.
+PPAs ativos do Launchpad são detectados nos arquivos de fontes do APT.
 
 ### Snap
 
-Aplicativos Snap são salvos com o canal quando disponível e com a indicação de `classic` quando aplicável. Snaps de infraestrutura como `core`, `core20`, `core22`, `core24` e `snapd` são ignorados porque normalmente são gerenciados pelo próprio Snap.
+Aplicativos Snap são salvos com canal e indicação de `classic` quando aplicável. Snaps de infraestrutura como `core`, `core20`, `core22`, `core24` e `snapd` são ignorados.
 
 ### Flatpak
 
@@ -116,13 +101,12 @@ A versão atual faz backup de:
 
 - PPAs são capturados, mas fontes APT arbitrárias de terceiros ainda não são migradas automaticamente.
 - Equivalência entre nomes de pacotes Ubuntu e outras distribuições ainda não é automática.
-- O restore Ubuntu exige que o destino também seja Ubuntu.
+- O restore/apply Ubuntu exige que o destino também seja Ubuntu.
 - O conjunto de dotfiles ainda é fixo; configuração personalizada será adicionada posteriormente.
 - Chaves SSH/GPG, tokens, cookies e senhas não são copiados automaticamente.
 
 ## Próximos passos
 
-- diff e apply;
 - providers para GNOME e KDE;
 - VS Code, Firefox, Steam e Docker;
 - configuração declarativa de dotfiles;
