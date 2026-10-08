@@ -131,21 +131,28 @@ def plan_apply(source: Path) -> tuple[list[list[str]], list[list[str]]]:
     if manager:
         apt_section = sections_by_name["APT packages"]
         manager_name = "apt-get" if manager == "apt-get" else manager
-        commands += _restore_package_manager(
-            manager_name, apt_section.removed
-        )
+        commands += _restore_package_manager(manager_name, apt_section.removed)
         destructive += _remove_commands(manager_name, apt_section.added)
 
     snap_section = sections_by_name["Snap"]
+    expected_snaps = {
+        item.get("name"): item
+        for item in manifest.snap
+        if isinstance(item, dict) and item.get("name")
+    }
     commands += snap_restore(
-        [{"name": name} for name in snap_section.removed]
+        [expected_snaps[name] for name in snap_section.removed]
     )
     destructive += _snap_remove_commands(snap_section.added)
 
     flatpak_section = sections_by_name["Flatpak"]
+    expected_flatpaks = {
+        item.get("app_id"): item
+        for item in manifest.flatpaks
+        if isinstance(item, dict) and item.get("app_id")
+    }
     commands += flatpak_restore(
-        [{"app_id": app_id, "remote": "flathub"}
-         for app_id in flatpak_section.removed]
+        [expected_flatpaks[app_id] for app_id in flatpak_section.removed]
     )
     destructive += _flatpak_remove_commands(flatpak_section.added)
 
@@ -154,8 +161,8 @@ def plan_apply(source: Path) -> tuple[list[list[str]], list[list[str]]]:
     destructive += _ppa_remove_commands(ppa_section.added)
 
     dotfile_section = sections_by_name["Dotfiles"]
-    dotfiles_to_restore = dotfile_section.removed + dotfile_section.modified
-    commands += _dotfile_restore_commands(source, dotfiles_to_restore)
+    commands += _dotfile_restore_commands(source, dotfile_section.removed)
+    destructive += _dotfile_restore_commands(source, dotfile_section.modified)
 
     return commands, destructive
 
