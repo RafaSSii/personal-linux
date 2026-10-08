@@ -116,10 +116,12 @@ def test_dry_run_never_executes(monkeypatch, tmp_path):
     _mock_ubuntu(monkeypatch, ["git", "vlc"])
 
     executed = []
-    monkeypatch.setattr(
-        "linux_env.core.subprocess.run",
-        lambda command, check: executed.append(command),
-    )
+    class SubprocessStub:
+        @staticmethod
+        def run(command, check):
+            executed.append(command)
+
+    monkeypatch.setattr("linux_env.core.subprocess", SubprocessStub)
 
     result = apply_environment(tmp_path, dry_run=True)
 
@@ -132,10 +134,12 @@ def test_assume_yes_allows_destructive_changes(monkeypatch, tmp_path):
     _mock_ubuntu(monkeypatch, ["git", "vlc"])
 
     executed = []
-    monkeypatch.setattr(
-        "linux_env.core.subprocess.run",
-        lambda command, check: executed.append(command),
-    )
+    class SubprocessStub:
+        @staticmethod
+        def run(command, check):
+            executed.append(command)
+
+    monkeypatch.setattr("linux_env.core.subprocess", SubprocessStub)
 
     apply_environment(tmp_path, assume_yes=True)
 
