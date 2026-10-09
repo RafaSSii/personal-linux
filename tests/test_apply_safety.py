@@ -83,7 +83,7 @@ def test_apply_rejects_ubuntu_manifest_on_non_ubuntu(monkeypatch, tmp_path):
     _manifest(tmp_path, distro="ubuntu")
     monkeypatch.setattr(core, "detect", lambda: {"distro": "fedora"})
 
-    with pytest.raises(RuntimeError, match="Ubuntu"):
+    with pytest.raises(RuntimeError, match="not currently considered compatible"):
         core.plan_apply(tmp_path)
 
 
