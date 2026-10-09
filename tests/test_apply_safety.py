@@ -62,6 +62,7 @@ def test_apply_stops_after_first_command_failure(monkeypatch, tmp_path):
         DiffSection("APT PPAs", [], [], []),
         DiffSection("Dotfiles", [], [], []),
     ])
+    monkeypatch.setattr(core, "package_restore", lambda manager, values: [["install", *values]])
     calls = []
 
     def fail_first(command, check):
