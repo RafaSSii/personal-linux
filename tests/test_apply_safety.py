@@ -37,10 +37,10 @@ def test_apply_declining_confirmation_never_executes_commands(monkeypatch, tmp_p
     _manifest(tmp_path)
     _mock_diff(monkeypatch, [
         DiffSection("APT packages", ["vlc"], [], []),
-        core.DiffSection("Snap", [], [], []),
-        core.DiffSection("Flatpak", [], [], []),
-        core.DiffSection("APT PPAs", [], [], []),
-        core.DiffSection("Dotfiles", [], [], []),
+        DiffSection("Snap", [], [], []),
+        DiffSection("Flatpak", [], [], []),
+        DiffSection("APT PPAs", [], [], []),
+        DiffSection("Dotfiles", [], [], []),
     ])
     executed = []
     monkeypatch.setattr(core, "subprocess", type("SubprocessStub", (), {
@@ -56,11 +56,11 @@ def test_apply_declining_confirmation_never_executes_commands(monkeypatch, tmp_p
 def test_apply_stops_after_first_command_failure(monkeypatch, tmp_path):
     _manifest(tmp_path, packages=["git", "curl"])
     _mock_diff(monkeypatch, [
-        core.DiffSection("APT packages", [], ["git", "curl"], []),
-        core.DiffSection("Snap", [], [], []),
-        core.DiffSection("Flatpak", [], [], []),
-        core.DiffSection("APT PPAs", [], [], []),
-        core.DiffSection("Dotfiles", [], [], []),
+        DiffSection("APT packages", [], ["git", "curl"], []),
+        DiffSection("Snap", [], [], []),
+        DiffSection("Flatpak", [], [], []),
+        DiffSection("APT PPAs", [], [], []),
+        DiffSection("Dotfiles", [], [], []),
     ])
     calls = []
 
