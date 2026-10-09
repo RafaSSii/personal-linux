@@ -168,7 +168,7 @@ def test_dotfiles_restore_commands_only_returns_command_when_backup_exists(
 ):
     backup = tmp_path / "backup"
     assert dotfiles.restore_commands(backup) == []
-    (backup / "dotfiles").mkdir()
+    (backup / "dotfiles").mkdir(parents=True)
     assert dotfiles.restore_commands(backup) == [
         ["cp", "-a", f"{backup}/dotfiles/.", str(Path.home())]
     ]
