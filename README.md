@@ -4,9 +4,9 @@ Portable Linux environment backup, synchronization and restore tool.
 
 O objetivo é transformar um ambiente Linux em um manifesto declarativo que possa ser restaurado em outra instalação, sem tentar clonar o sistema operacional inteiro.
 
-## v0.3.0 — Ubuntu + Apply
+## Compatibilidade atual: Ubuntu e Linux Mint
 
-A primeira implementação específica para Ubuntu inclui:
+A implementação atual cobre Ubuntu e Linux Mint baseado em Ubuntu (não LMDE), incluindo:
 
 - APT com pacotes explicitamente instalados via `apt-mark showmanual`;
 - restauração APT com `apt-get update` + `apt-get install`;
@@ -15,7 +15,7 @@ A primeira implementação específica para Ubuntu inclui:
 - Flatpak com identificação do remote;
 - backup dos dotfiles suportados;
 - manifesto YAML schema 2;
-- proteção contra restaurar um manifesto Ubuntu em uma distro diferente;
+- validação de compatibilidade: Ubuntu e Linux Mint baseado em Ubuntu podem trocar manifestos; distros não compatíveis são bloqueadas;
 - `restore --dry-run` para revisar os comandos antes de executá-los.
 
 ## Instalação
@@ -72,7 +72,7 @@ Por segurança, o primeiro comando apenas exibe o plano. Sem `--dry-run`, o CLI 
 
 `--yes` pula somente essa confirmação. Ele não altera o conteúdo do manifesto nem ignora a validação de distro.
 
-## O que é salvo no Ubuntu
+## O que é salvo no Ubuntu e Linux Mint
 
 ### APT
 
@@ -99,9 +99,11 @@ A versão atual faz backup de:
 
 ## Limitações atuais
 
+- O Linux Mint normalmente não vem com Snap habilitado. Se o manifesto contém Snaps, instale/habilite `snapd` no Mint antes de restaurar esses aplicativos; o `linux-env` não altera essa política automaticamente.
+
 - PPAs são capturados, mas fontes APT arbitrárias de terceiros ainda não são migradas automaticamente.
 - Equivalência entre nomes de pacotes Ubuntu e outras distribuições ainda não é automática.
-- O restore/apply Ubuntu exige que o destino também seja Ubuntu.
+- A troca de manifestos entre Ubuntu e Linux Mint só é aceita quando o Mint é baseado em Ubuntu; LMDE não é tratado como equivalente.
 - O conjunto de dotfiles ainda é fixo; configuração personalizada será adicionada posteriormente.
 - Chaves SSH/GPG, tokens, cookies e senhas não são copiados automaticamente.
 
