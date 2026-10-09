@@ -4,6 +4,7 @@ import subprocess
 import pytest
 
 from linux_env import core
+from linux_env.diff import DiffSection
 from linux_env.providers import dotfiles
 
 
@@ -35,7 +36,7 @@ def _mock_diff(monkeypatch, sections):
 def test_apply_declining_confirmation_never_executes_commands(monkeypatch, tmp_path):
     _manifest(tmp_path)
     _mock_diff(monkeypatch, [
-        core.DiffSection("APT packages", ["vlc"], [], []),
+        DiffSection("APT packages", ["vlc"], [], []),
         core.DiffSection("Snap", [], [], []),
         core.DiffSection("Flatpak", [], [], []),
         core.DiffSection("APT PPAs", [], [], []),
