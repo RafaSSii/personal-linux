@@ -50,6 +50,10 @@ def distro_compatible(source: dict, target: dict) -> bool:
     source_distro = source.get("distro", "")
     target_distro = target.get("distro", "")
 
+    # Older schema-2 manifests may omit system metadata entirely.
+    if not source_distro:
+        return True
+
     if source_distro == target_distro:
         return True
 
