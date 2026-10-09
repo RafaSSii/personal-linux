@@ -1,7 +1,7 @@
 from pathlib import Path
 import subprocess
 
-from .detect import detect
+from .detect import detect, distro_compatible
 from .diff import compare_manifest_to_system
 from .manifest import load_manifest, save_manifest
 from .models import EnvironmentManifest
@@ -43,11 +43,12 @@ def restore_environment(source: Path, dry_run: bool = False) -> list[list[str]]:
     manifest = load_manifest(source / "manifest.yaml")
     target = detect()
 
-    source_distro = manifest.system.get("distro", "")
-    if source_distro == "ubuntu" and target.get("distro") != "ubuntu":
+    if not distro_compatible(manifest.system, target):
         raise RuntimeError(
-            "This manifest was created on Ubuntu and this restore target "
-            f"is {target.get('distro', 'unknown')}. Run the restore on Ubuntu."
+            "This manifest was created on "
+            f"{manifest.system.get('distro', 'unknown')} and this restore target "
+            f"is {target.get('distro', 'unknown')}. These distributions are not "
+            "currently considered compatible."
         )
 
     commands = []
@@ -113,11 +114,12 @@ def plan_apply(source: Path) -> tuple[list[list[str]], list[list[str]]]:
     manifest = load_manifest(source / "manifest.yaml")
     target = detect()
 
-    source_distro = manifest.system.get("distro", "")
-    if source_distro == "ubuntu" and target.get("distro") != "ubuntu":
+    if not distro_compatible(manifest.system, target):
         raise RuntimeError(
-            "This manifest was created on Ubuntu and this apply target "
-            f"is {target.get('distro', 'unknown')}. Run apply on Ubuntu."
+            "This manifest was created on "
+            f"{manifest.system.get('distro', 'unknown')} and this apply target "
+            f"is {target.get('distro', 'unknown')}. These distributions are not "
+            "currently considered compatible."
         )
 
     metadata, sections = compare_manifest_to_system(source)
