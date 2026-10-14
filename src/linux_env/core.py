@@ -172,12 +172,8 @@ def _ppa_remove_commands(ppas: list[str]) -> list[list[str]]:
 
 
 def _dotfile_restore_commands(source: Path, paths: list[str]) -> list[list[str]]:
-    commands, _ = dotfile_restore_plan(source)
-    allowed = set(paths)
-    return [
-        command for command in commands
-        if any(relative in " ".join(command) for relative in allowed)
-    ]
+    commands, _ = dotfile_restore_plan(source, paths=paths)
+    return commands
 
 
 def plan_apply(source: Path) -> tuple[list[list[str]], list[list[str]]]:
