@@ -10,10 +10,12 @@ BOOT_EXACT = {
     "systemd-boot", "shim", "sbctl",
 }
 BOOT_PREFIXES = ("grub-theme-", "kernel-", "initramfs-")
-HARDWARE_EXACT = {"amd-ucode", "intel-ucode", "alsa-firmware", "linux-firmware"}
+# Keep broadly useful firmware, CPU power tools, Mesa and Vulkan packages
+# eligible for restore. Only source-hardware-specific drivers and microcode
+# remain excluded by default.
+HARDWARE_EXACT = {"amd-ucode", "intel-ucode", "alsa-firmware"}
 HARDWARE_PREFIXES = (
     "xf86-video-", "xf86-input-", "nvidia", "virtualbox-host",
-    "lib32-vulkan-", "vulkan-", "lib32-mesa", "mesa",
 )
 DISTRO_PREFIXES = ("manjaro-",)
 
