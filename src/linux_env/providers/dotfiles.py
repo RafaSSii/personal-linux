@@ -29,7 +29,7 @@ def restore_plan(
     """Build per-file restore commands and report existing files that will be backed up."""
     home = home or Path.home()
     dotfiles = source / "dotfiles"
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     backup_root = backup_root or (
         home / ".local/share/linux-env/restore-backups" / stamp
     )
