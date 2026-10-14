@@ -191,9 +191,10 @@ def test_package_safety_classifies_and_skips_risky_packages():
     selected, skipped = safe_restore_packages([
         "firefox", "linux71", "amd-ucode", "xf86-video-intel",
         "grub", "manjaro-kde-settings", "git", "firefox",
+        "linux-firmware", "mesa", "vulkan-radeon", "cpupower",
     ])
 
-    assert selected == ["firefox", "git"]
+    assert selected == ["cpupower", "firefox", "git", "linux-firmware", "mesa", "vulkan-radeon"]
     assert skipped == {
         "boot": ["grub", "linux71"],
         "hardware": ["amd-ucode", "xf86-video-intel"],
