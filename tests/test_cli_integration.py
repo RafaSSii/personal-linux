@@ -20,6 +20,7 @@ def _fake_tools(tmp_path: Path, monkeypatch, outputs: dict[str, str] | None = No
     scripts = {
         "apt-get": "",
         "apt-mark": "printf 'git\\ncurl\\n'\n",
+        "dpkg-query": "",
         "sudo": "",
         "snap": "if [ \"$1\" = list ]; then printf 'Name Version Rev Tracking Publisher Notes\\ncode 1 123 latest/stable vendor classic\\n' ; fi\n",
         "flatpak": "if [ \"$1\" = list ]; then printf 'org.example.Editor\\tflathub\\n' ; fi\n",
