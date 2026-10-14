@@ -20,7 +20,7 @@ A implementação atual cobre Ubuntu, Linux Mint baseado em Ubuntu (não LMDE) e
 - validação de compatibilidade: Ubuntu e Linux Mint baseado em Ubuntu podem trocar manifestos; distros não compatíveis são bloqueadas;
 - `restore --dry-run` para revisar os comandos antes de executá-los;
 - instalação apenas dos pacotes portáveis que ainda não estão instalados;
-- exclusão automática de pacotes de boot/kernel, hardware e específicos do Manjaro;
+- exclusão automática de pacotes de boot/kernel, drivers específicos do hardware e pacotes específicos do Manjaro; firmware genérico, Mesa/Vulkan e ferramentas como `cpupower` continuam elegíveis para restauração; microcódigos de CPU e drivers específicos são ignorados por padrão;
 - resumo por categoria e proteção de dotfiles existentes com backup antes de substituição.
 
 ## Instalação
