@@ -172,3 +172,24 @@ def test_dotfiles_restore_commands_only_returns_command_when_backup_exists(
     assert dotfiles.restore_commands(backup) == [
         ["cp", "-a", f"{backup}/dotfiles/.", str(Path.home())]
     ]
+
+
+
+def test_pacman_export_uses_explicitly_installed_packages(monkeypatch):
+    from linux_env.providers import packages
+
+    monkeypatch.setattr(packages.shutil, "which", lambda name: "/usr/bin/pacman" if name == "pacman" else None)
+    monkeypatch.setattr(packages, "_run", lambda command: "firefox\nplasma\nfirefox\n")
+
+    manager, exported = packages.export_packages()
+
+    assert manager == "pacman"
+    assert exported == ["firefox", "plasma"]
+
+
+def test_pacman_restore_uses_safe_needed_flag():
+    from linux_env.providers.packages import restore_commands
+
+    assert restore_commands("pacman", ["firefox", "plasma"]) == [
+        ["sudo", "pacman", "-S", "--needed", "firefox", "plasma"]
+    ]
