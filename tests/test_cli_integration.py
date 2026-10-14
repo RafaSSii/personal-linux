@@ -132,4 +132,6 @@ def test_restore_dry_run_prints_plan_without_executing_commands(tmp_path, monkey
     assert result.returncode == 0, result.stderr
     assert "sudo apt-get update" in result.stdout
     assert "sudo apt-get install -y git" in result.stdout
-    assert not log.exists() or log.read_text(encoding="utf-8") == ""
+    logged = log.read_text(encoding="utf-8").splitlines() if log.exists() else []
+    # A dry-run may query installed packages, but must not run mutating commands.
+    assert all(line.startswith(("apt-mark showmanual", "dpkg-query -W")) for line in logged)
