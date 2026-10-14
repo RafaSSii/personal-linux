@@ -206,7 +206,7 @@ def test_installed_packages_uses_pacman_query(monkeypatch):
 
     monkeypatch.setattr(
         packages.subprocess, "check_output",
-        lambda command, **kwargs: "firefox\\nplasma\\n",
+        lambda command, **kwargs: "firefox\nplasma\n",
     )
     assert packages.installed_packages("pacman") == {"firefox", "plasma"}
 
