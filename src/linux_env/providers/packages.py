@@ -9,7 +9,7 @@ BOOT_EXACT = {
     "efibootmgr", "os-prober", "mkinitcpio", "mkinitcpio-openswap",
     "systemd-boot", "shim", "sbctl",
 }
-BOOT_PREFIXES = ("linux", "grub-theme-", "kernel-", "initramfs-")
+BOOT_PREFIXES = ("grub-theme-", "kernel-", "initramfs-")
 HARDWARE_EXACT = {"amd-ucode", "intel-ucode", "alsa-firmware", "linux-firmware"}
 HARDWARE_PREFIXES = (
     "xf86-video-", "xf86-input-", "nvidia", "virtualbox-host",
@@ -23,6 +23,7 @@ def classify_package(name: str) -> str:
     normalized = name.strip().lower()
     if (
         normalized in BOOT_EXACT
+        or re.match(r"linux(?:[0-9]|-(?:lts|zen|hardened|rt|image|headers))", normalized)
         or any(normalized.startswith(prefix) for prefix in BOOT_PREFIXES)
     ):
         return "boot"
