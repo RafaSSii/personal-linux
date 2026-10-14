@@ -100,13 +100,13 @@ def test_restore_cli_executes_only_planned_commands_through_fake_path(tmp_path, 
 
     assert result.returncode == 0, result.stderr
     assert "sudo apt-get update" in result.stdout
-    assert "sudo snap install code --channel=latest/stable --classic" in result.stdout
-    assert "flatpak install -y flathub org.example.Editor" in result.stdout
+    assert "sudo snap install code --channel=latest/stable --classic" not in result.stdout
+    assert "flatpak install -y flathub org.example.Editor" not in result.stdout
     executed = log.read_text(encoding="utf-8").splitlines()
     assert "sudo apt-get update" in executed
     assert "sudo apt-get install -y git" in executed
-    assert "sudo snap install code --channel=latest/stable --classic" in executed
-    assert "flatpak install -y flathub org.example.Editor" in executed
+    assert not any(line.startswith("sudo snap install code ") for line in executed)
+    assert not any(line.startswith("flatpak install -y flathub org.example.Editor") for line in executed)
     assert any(line.startswith("cp -a ") for line in executed)
 
 
