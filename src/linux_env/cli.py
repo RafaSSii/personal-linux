@@ -1,7 +1,12 @@
 import argparse
 from pathlib import Path
 
-from .core import apply_environment, restore_environment, save_environment
+from .core import (
+    apply_environment,
+    plan_restore,
+    restore_environment,
+    save_environment,
+)
 from .detect import detect
 from .diff import compare_manifest_to_system
 
@@ -9,11 +14,10 @@ from .diff import compare_manifest_to_system
 def _print_diff(source: Path) -> None:
     metadata, sections = compare_manifest_to_system(source)
     system = metadata["system"]
-
     print(f"Comparing current system with {metadata['source']}")
 
     if system:
-        print("\nSystem:")
+        print("\\nSystem:")
         for key, values in system.items():
             print(f"  ~ {key}: {values['expected']} -> {values['actual']}")
 
@@ -22,7 +26,7 @@ def _print_diff(source: Path) -> None:
         if not section.changed:
             continue
         changed = True
-        print(f"\n{section.name}:")
+        print(f"\\n{section.name}:")
         for item in section.added:
             print(f"  + {item}")
         for item in section.removed:
@@ -31,7 +35,7 @@ def _print_diff(source: Path) -> None:
             print(f"  ~ {item}")
 
     if not changed and not system:
-        print("\nEnvironment is in sync.")
+        print("\\nEnvironment is in sync.")
 
 
 def _print_commands(commands: list[list[str]]) -> None:
@@ -46,6 +50,35 @@ def _confirm_apply() -> bool:
     return answer in {"y", "yes"}
 
 
+def _confirm_restore() -> bool:
+    answer = input(
+        "Existing dotfiles will be backed up before replacement. Continue? [y/N] "
+    ).strip().lower()
+    return answer in {"y", "yes"}
+
+
+def _print_restore_report(report: dict[str, list[str]], conflicts: list[str]) -> None:
+    print("Restore summary:")
+    print(f"  Packages to install: {len(report['to_install'])}")
+    print(f"  Packages already installed (skipped): {len(report['already_installed'])}")
+    for category, label in (
+        ("skipped_boot", "Boot/kernel packages skipped"),
+        ("skipped_hardware", "Hardware-specific packages skipped"),
+        ("skipped_distribution", "Distribution-specific/incompatible packages skipped"),
+    ):
+        items = report[category]
+        print(f"  {label}: {len(items)}")
+        if items:
+            print("    " + ", ".join(items))
+    if report["already_installed"]:
+        print("  Already installed: " + ", ".join(report["already_installed"]))
+    if report["to_install"]:
+        print("  To install: " + ", ".join(report["to_install"]))
+    if conflicts:
+        print("  Existing dotfiles to back up before replacement: " + ", ".join(conflicts))
+        print("  Backups will be placed under ~/.local/share/linux-env/restore-backups/")
+
+
 def main():
     parser = argparse.ArgumentParser(prog="linux-env")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -58,6 +91,11 @@ def main():
     restore = sub.add_parser("restore")
     restore.add_argument("source", type=Path)
     restore.add_argument("--dry-run", action="store_true")
+    restore.add_argument(
+        "--yes",
+        action="store_true",
+        help="skip confirmation before replacing existing dotfiles (a backup is still made)",
+    )
 
     diff = sub.add_parser(
         "diff",
@@ -90,7 +128,15 @@ def main():
         save_environment(args.destination)
         print(f"Environment saved to {args.destination}")
     elif args.command == "restore":
-        _print_commands(restore_environment(args.source, args.dry_run))
+        commands, report, conflicts = plan_restore(args.source)
+        _print_restore_report(report, conflicts)
+        _print_commands(commands)
+        if not args.dry_run:
+            restore_environment(
+                args.source,
+                assume_yes=args.yes,
+                confirm=_confirm_restore,
+            )
     elif args.command == "diff":
         _print_diff(args.source)
     elif args.command == "apply":
