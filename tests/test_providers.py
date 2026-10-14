@@ -163,15 +163,52 @@ def test_dotfiles_backup_copies_content_and_creates_nested_directories(
     ).read_text() == "vim.opt.number = true\n"
 
 
-def test_dotfiles_restore_commands_only_returns_command_when_backup_exists(
-    tmp_path,
+def test_dotfiles_restore_plan_uses_allowlist_and_creates_conflict_backup(
+    monkeypatch, tmp_path,
 ):
+    home = tmp_path / "home"
+    home.mkdir()
+    (home / ".bashrc").write_text("existing", encoding="utf-8")
     backup = tmp_path / "backup"
-    assert dotfiles.restore_commands(backup) == []
     (backup / "dotfiles").mkdir(parents=True)
-    assert dotfiles.restore_commands(backup) == [
-        ["cp", "-a", f"{backup}/dotfiles/.", str(Path.home())]
-    ]
+    (backup / "dotfiles/.bashrc").write_text("saved", encoding="utf-8")
+    (backup / "dotfiles/.ssh").mkdir()
+    (backup / "dotfiles/.ssh/id_ed25519").write_text("secret", encoding="utf-8")
+
+    commands, conflicts = dotfiles.restore_plan(
+        backup, home=home, backup_root=tmp_path / "conflicts"
+    )
+
+    assert conflicts == [".bashrc"]
+    assert ["cp", "-a", str(home / ".bashrc"), str(tmp_path / "conflicts/.bashrc")] in commands
+    assert ["cp", "-a", str(backup / "dotfiles/.bashrc"), str(home / ".bashrc")] in commands
+    assert not any(".ssh" in " ".join(command) for command in commands)
+
+
+def test_package_safety_classifies_and_skips_risky_packages():
+    from linux_env.providers.packages import safe_restore_packages
+
+    selected, skipped = safe_restore_packages([
+        "firefox", "linux71", "amd-ucode", "xf86-video-intel",
+        "grub", "manjaro-kde-settings", "git", "firefox",
+    ])
+
+    assert selected == ["firefox", "git"]
+    assert skipped == {
+        "boot": ["grub", "linux71"],
+        "hardware": ["amd-ucode", "xf86-video-intel"],
+        "distribution": ["manjaro-kde-settings"],
+    }
+
+
+def test_installed_packages_uses_pacman_query(monkeypatch):
+    from linux_env.providers import packages
+
+    monkeypatch.setattr(
+        packages.subprocess, "check_output",
+        lambda command, **kwargs: "firefox\\nplasma\\n",
+    )
+    assert packages.installed_packages("pacman") == {"firefox", "plasma"}
 
 
 
