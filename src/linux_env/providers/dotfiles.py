@@ -25,6 +25,7 @@ def restore_plan(
     *,
     home: Path | None = None,
     backup_root: Path | None = None,
+    paths: list[str] | None = None,
 ) -> tuple[list[list[str]], list[str]]:
     """Build per-file restore commands and report existing files that will be backed up."""
     home = home or Path.home()
@@ -37,6 +38,8 @@ def restore_plan(
     conflicts: list[str] = []
 
     for relative in FILES:
+        if paths is not None and relative not in paths:
+            continue
         saved = dotfiles / relative
         if not saved.is_file() or saved.is_symlink():
             continue
