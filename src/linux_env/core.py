@@ -85,8 +85,32 @@ def plan_restore(source: Path) -> tuple[list[list[str]], dict[str, list[str]], l
         commands += _restore_package_manager(normalized, missing)
 
     commands += apt_repo_restore(manifest.repositories.get("apt_ppas", []))
-    commands += snap_restore(manifest.snap)
-    commands += flatpak_restore(manifest.flatpaks)
+
+    installed_snaps = {
+        item.get("name") for item in export_snaps()
+        if isinstance(item, dict) and item.get("name")
+    }
+    missing_snaps = [
+        item for item in manifest.snap
+        if (
+            (item.get("name") if isinstance(item, dict) else item)
+            and (item.get("name") if isinstance(item, dict) else item) not in installed_snaps
+        )
+    ]
+    commands += snap_restore(missing_snaps)
+
+    installed_flatpaks = {
+        item.get("app_id") for item in export_flatpaks()
+        if isinstance(item, dict) and item.get("app_id")
+    }
+    missing_flatpaks = [
+        item for item in manifest.flatpaks
+        if (
+            (item.get("app_id") if isinstance(item, dict) else item)
+            and (item.get("app_id") if isinstance(item, dict) else item) not in installed_flatpaks
+        )
+    ]
+    commands += flatpak_restore(missing_flatpaks)
 
     dotfile_commands, conflicts = dotfile_restore_plan(source)
     commands += dotfile_commands
