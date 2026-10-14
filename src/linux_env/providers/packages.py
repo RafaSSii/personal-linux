@@ -32,7 +32,7 @@ def classify_package(name: str) -> str:
     if (
         normalized in HARDWARE_EXACT
         or any(normalized.startswith(prefix) for prefix in HARDWARE_PREFIXES)
-        or normalized in {"mhwd", "mhwd-db", "cpupower"}
+        or normalized in {"mhwd", "mhwd-db"}
     ):
         return "hardware"
     if any(normalized.startswith(prefix) for prefix in DISTRO_PREFIXES):
