@@ -4,11 +4,13 @@ Portable Linux environment backup, synchronization and restore tool.
 
 O objetivo é transformar um ambiente Linux em um manifesto declarativo que possa ser restaurado em outra instalação, sem tentar clonar o sistema operacional inteiro.
 
-## Compatibilidade atual: Ubuntu e Linux Mint
+## Compatibilidade atual: Ubuntu, Linux Mint e Manjaro
 
-A implementação atual cobre Ubuntu e Linux Mint baseado em Ubuntu (não LMDE), incluindo:
+A implementação atual cobre Ubuntu, Linux Mint baseado em Ubuntu (não LMDE) e Manjaro, incluindo:
 
 - APT com pacotes explicitamente instalados via `apt-mark showmanual`;
+- Pacman no Manjaro com pacotes explicitamente instalados via `pacman -Qqe`;
+- KDE Plasma e GNOME como sessões de desktop detectadas; manifestos podem ser restaurados entre as edições Manjaro KDE e GNOME;
 - restauração APT com `apt-get update` + `apt-get install`;
 - detecção de PPAs do Launchpad;
 - Snap com canal e suporte a `--classic`;
@@ -72,7 +74,7 @@ Por segurança, o primeiro comando apenas exibe o plano. Sem `--dry-run`, o CLI 
 
 `--yes` pula somente essa confirmação. Ele não altera o conteúdo do manifesto nem ignora a validação de distro.
 
-## O que é salvo no Ubuntu e Linux Mint
+## O que é salvo no Ubuntu, Linux Mint e Manjaro
 
 ### APT
 
@@ -102,14 +104,14 @@ A versão atual faz backup de:
 - O Linux Mint normalmente não vem com Snap habilitado. Se o manifesto contém Snaps, instale/habilite `snapd` no Mint antes de restaurar esses aplicativos; o `linux-env` não altera essa política automaticamente.
 
 - PPAs são capturados, mas fontes APT arbitrárias de terceiros ainda não são migradas automaticamente.
-- Equivalência entre nomes de pacotes Ubuntu e outras distribuições ainda não é automática.
+- Equivalência entre nomes de pacotes APT e Pacman ainda não é automática; não é seguro restaurar um manifesto Ubuntu diretamente no Manjaro ou vice-versa.
 - A troca de manifestos entre Ubuntu e Linux Mint só é aceita quando o Mint é baseado em Ubuntu; LMDE não é tratado como equivalente.
-- O conjunto de dotfiles ainda é fixo; configuração personalizada será adicionada posteriormente.
+- KDE e GNOME são detectados, mas a exportação/restauração de todas as preferências específicas dos desktops ainda será implementada; o backup atual cobre apenas os dotfiles explicitamente permitidos.
 - Chaves SSH/GPG, tokens, cookies e senhas não são copiados automaticamente.
 
 ## Próximos passos
 
-- providers para GNOME e KDE;
+- backup e restauração das preferências específicas do GNOME (dconf) e KDE Plasma;
 - VS Code, Firefox, Steam e Docker;
 - configuração declarativa de dotfiles;
 - camada segura para secrets;
