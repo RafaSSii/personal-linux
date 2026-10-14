@@ -18,7 +18,10 @@ A implementação atual cobre Ubuntu, Linux Mint baseado em Ubuntu (não LMDE) e
 - backup dos dotfiles suportados;
 - manifesto YAML schema 2;
 - validação de compatibilidade: Ubuntu e Linux Mint baseado em Ubuntu podem trocar manifestos; distros não compatíveis são bloqueadas;
-- `restore --dry-run` para revisar os comandos antes de executá-los.
+- `restore --dry-run` para revisar os comandos antes de executá-los;
+- instalação apenas dos pacotes portáveis que ainda não estão instalados;
+- exclusão automática de pacotes de boot/kernel, hardware e específicos do Manjaro;
+- resumo por categoria e proteção de dotfiles existentes com backup antes de substituição.
 
 ## Instalação
 
@@ -37,12 +40,19 @@ linux-env detect
 linux-env save ./meu-ubuntu
 ```
 
-Na máquina de destino:
+Na máquina de destino, revise primeiro o plano:
 
 ```bash
 linux-env restore ./meu-ubuntu --dry-run
+```
+
+O plano informa quantos pacotes serão instalados, quantos já existem e quais foram ignorados por segurança. Quando estiver pronto:
+
+```bash
 linux-env restore ./meu-ubuntu
 ```
+
+Se houver dotfiles que já existem, o programa pede confirmação e salva cópias em `~/.local/share/linux-env/restore-backups/` antes de substituí-los. Use `--yes` para dispensar essa confirmação; o backup continua sendo criado.
 
 ## Diff
 
