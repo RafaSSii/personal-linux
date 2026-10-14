@@ -7,11 +7,12 @@ from .manifest import load_manifest, save_manifest
 from .models import EnvironmentManifest
 from .providers.apt import export_ppas, restore_commands as apt_repo_restore
 from .providers.dotfiles import backup as backup_dotfiles
-from .providers.dotfiles import restore_commands as dotfile_restore
+from .providers.dotfiles import restore_plan as dotfile_restore_plan
 from .providers.flatpak import export_flatpaks
 from .providers.flatpak import restore_commands as flatpak_restore
 from .providers.packages import export_packages
-from .providers.packages import restore_commands as package_restore
+from .providers.packages import installed_packages, restore_commands as package_restore
+from .providers.packages import safe_restore_packages
 from .providers.snap import export_snaps
 from .providers.snap import restore_commands as snap_restore
 
@@ -39,10 +40,7 @@ def _restore_package_manager(manager: str, packages: list[str]) -> list[list[str
     return package_restore("apt-get" if manager == "apt" else manager, packages)
 
 
-def restore_environment(source: Path, dry_run: bool = False) -> list[list[str]]:
-    manifest = load_manifest(source / "manifest.yaml")
-    target = detect()
-
+def _validate_restore_manifest(manifest, target) -> None:
     if not distro_compatible(manifest.system, target):
         raise RuntimeError(
             "This manifest was created on "
@@ -51,17 +49,66 @@ def restore_environment(source: Path, dry_run: bool = False) -> list[list[str]]:
             "currently considered compatible."
         )
 
-    commands = []
+
+def plan_restore(source: Path) -> tuple[list[list[str]], dict[str, list[str]], list[str]]:
+    """Plan a conservative restore: install missing portable packages and protect dotfiles."""
+    manifest = load_manifest(source / "manifest.yaml")
+    target = detect()
+    _validate_restore_manifest(manifest, target)
+
+    commands: list[list[str]] = []
+    report: dict[str, list[str]] = {
+        "already_installed": [],
+        "skipped_boot": [],
+        "skipped_hardware": [],
+        "skipped_distribution": [],
+        "to_install": [],
+    }
+
+    current_manager, _ = export_packages()
+    for manifest_manager, packages in manifest.packages.items():
+        normalized = "apt-get" if manifest_manager == "apt" else manifest_manager
+        if current_manager and normalized != current_manager:
+            report["skipped_distribution"].extend(packages)
+            continue
+
+        portable, skipped = safe_restore_packages(packages)
+        for category in ("boot", "hardware", "distribution"):
+            report[f"skipped_{category}"].extend(skipped.get(category, []))
+
+        installed = installed_packages(normalized)
+        missing = [package for package in portable if package not in installed]
+        report["already_installed"].extend(
+            package for package in portable if package in installed
+        )
+        report["to_install"].extend(missing)
+        commands += _restore_package_manager(normalized, missing)
+
     commands += apt_repo_restore(manifest.repositories.get("apt_ppas", []))
-
-    for manager, packages in manifest.packages.items():
-        commands += _restore_package_manager(manager, packages)
-
     commands += snap_restore(manifest.snap)
     commands += flatpak_restore(manifest.flatpaks)
 
-    if manifest.dotfiles:
-        commands += dotfile_restore(source)
+    dotfile_commands, conflicts = dotfile_restore_plan(source)
+    commands += dotfile_commands
+    for key in report:
+        report[key] = sorted(set(report[key]))
+    return commands, report, conflicts
+
+
+def restore_environment(
+    source: Path,
+    dry_run: bool = False,
+    *,
+    assume_yes: bool = False,
+    confirm=None,
+) -> list[list[str]]:
+    commands, _report, conflicts = plan_restore(source)
+    if conflicts and not dry_run and not assume_yes:
+        if confirm is None or not confirm():
+            raise RuntimeError(
+                "Restore cancelled: existing dotfiles would be overwritten. "
+                "Review the dry-run; existing files are backed up before replacement."
+            )
 
     if not dry_run:
         for command in commands:
@@ -101,12 +148,11 @@ def _ppa_remove_commands(ppas: list[str]) -> list[list[str]]:
 
 
 def _dotfile_restore_commands(source: Path, paths: list[str]) -> list[list[str]]:
-    root = source / "dotfiles"
-    home = Path.home()
+    commands, _ = dotfile_restore_plan(source)
+    allowed = set(paths)
     return [
-        ["cp", "-a", str(root / relative), str(home / relative)]
-        for relative in paths
-        if (root / relative).exists()
+        command for command in commands
+        if any(relative in " ".join(command) for relative in allowed)
     ]
 
 
