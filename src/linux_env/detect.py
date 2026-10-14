@@ -36,6 +36,9 @@ def detect() -> dict:
     elif distro == "linuxmint" and os_release.get("UBUNTU_CODENAME"):
         data["base_distro"] = "ubuntu"
         data["base_codename"] = os_release["UBUNTU_CODENAME"]
+    elif distro == "manjaro":
+        data["base_distro"] = "arch"
+        data["base_codename"] = os_release.get("BUILD_ID", "rolling")
 
     for manager in ("apt-get", "dnf", "pacman", "zypper"):
         if shutil.which(manager):
