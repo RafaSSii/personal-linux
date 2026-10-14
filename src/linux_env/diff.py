@@ -57,10 +57,22 @@ def compare_manifest_to_system(source: Path) -> tuple[dict[str, Any], list[DiffS
     current = detect()
     sections: list[DiffSection] = []
 
-    expected_apt = set(manifest.packages.get("apt", []))
     manager, current_packages = export_packages()
-    actual_apt = set(current_packages) if manager == "apt-get" else set()
-    sections.append(compare_sets("APT packages", expected_apt, actual_apt))
+    manifest_manager = {
+        "apt-get": "apt",
+        "dnf": "dnf",
+        "pacman": "pacman",
+        "zypper": "zypper",
+    }.get(manager or "", "")
+    section_name = {
+        "apt": "APT packages",
+        "dnf": "DNF packages",
+        "pacman": "Pacman packages",
+        "zypper": "Zypper packages",
+    }.get(manifest_manager, "Packages")
+    expected_packages = set(manifest.packages.get(manifest_manager, []))
+    actual_packages = set(current_packages) if manifest_manager else set()
+    sections.append(compare_sets(section_name, expected_packages, actual_packages))
 
     expected_snap = _names(manifest.snap, "name")
     actual_snap = _names(export_snaps(), "name")
