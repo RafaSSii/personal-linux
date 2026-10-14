@@ -1,10 +1,10 @@
 import argparse
 from pathlib import Path
+import subprocess
 
 from .core import (
     apply_environment,
     plan_restore,
-    restore_environment,
     save_environment,
 )
 from .detect import detect
@@ -132,11 +132,12 @@ def main():
         _print_restore_report(report, conflicts)
         _print_commands(commands)
         if not args.dry_run:
-            restore_environment(
-                args.source,
-                assume_yes=args.yes,
-                confirm=_confirm_restore,
-            )
+            if conflicts and not args.yes and not _confirm_restore():
+                raise SystemExit(
+                    "Restore cancelled; no commands were executed."
+                )
+            for command in commands:
+                subprocess.run(command, check=True)
     elif args.command == "diff":
         _print_diff(args.source)
     elif args.command == "apply":
