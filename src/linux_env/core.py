@@ -131,10 +131,16 @@ def plan_apply(source: Path) -> tuple[list[list[str]], list[list[str]]]:
 
     manager, _ = export_packages()
     if manager:
-        apt_section = sections_by_name["APT packages"]
+        section_name = {
+            "apt-get": "APT packages",
+            "dnf": "DNF packages",
+            "pacman": "Pacman packages",
+            "zypper": "Zypper packages",
+        }.get(manager, "Packages")
+        package_section = sections_by_name[section_name]
         manager_name = "apt-get" if manager == "apt-get" else manager
-        commands += _restore_package_manager(manager_name, apt_section.removed)
-        destructive += _remove_commands(manager_name, apt_section.added)
+        commands += _restore_package_manager(manager_name, package_section.removed)
+        destructive += _remove_commands(manager_name, package_section.added)
 
     snap_section = sections_by_name["Snap"]
     expected_snaps = {
