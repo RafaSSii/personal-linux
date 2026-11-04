@@ -54,6 +54,42 @@ linux-env restore ./meu-ubuntu
 
 Se houver dotfiles que já existem, o programa pede confirmação e salva cópias em `~/.local/share/linux-env/restore-backups/` antes de substituí-los. Use `--yes` para dispensar essa confirmação; o backup continua sendo criado.
 
+## Transferência direta entre computadores (SSH)
+
+O comando `pull` recebe um snapshot diretamente de outro Linux pela rede, usando SSH e sem servidor adicional. No computador de origem, o `linux-env` precisa estar instalado e acessível no PATH da sessão SSH (uma instalação via pipx é recomendada).
+
+No Manjaro (origem), instale e habilite o servidor SSH:
+
+```bash
+sudo pacman -S --needed openssh
+sudo systemctl enable --now sshd
+hostname -I
+```
+
+No Mint (destino), confirme que o cliente SSH está disponível:
+
+```bash
+ssh -V
+```
+
+Teste a conexão usando o IP exibido no Manjaro:
+
+```bash
+ssh seu-usuario@IP_DO_MANJARO
+```
+
+Aceite a chave do host somente se reconhecer o computador e autentique-se. Depois, no Mint, execute:
+
+```bash
+linux-env pull seu-usuario@IP_DO_MANJARO --destination ~/linux-env-import
+```
+
+O snapshot ficará em `~/linux-env-import/backup`. O comando usa a autenticação SSH normal, não aceita destinos não vazios e rejeita caminhos e tipos de arquivo inseguros no arquivo recebido. A transferência cria um snapshot novo no computador de origem; ela não modifica o sistema de origem.
+
+Para evitar senha em cada conexão, configure uma chave SSH e copie a chave pública com `ssh-copy-id seu-usuario@IP_DO_MANJARO`. Não desative a verificação da chave do host.
+
+**Importante:** `pull` apenas transfere o backup. A migração entre distribuições (por exemplo, Manjaro/Pacman para Mint/APT) ainda exige a etapa separada de mapeamento de aplicativos; não execute `restore` diretamente entre essas distribuições.
+
 ## Diff
 
 Compare o estado atual com um manifesto salvo:
