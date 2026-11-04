@@ -35,7 +35,7 @@ def _safe_extract(archive_path: Path, destination: Path) -> None:
             target = destination.joinpath(*name.parts)
             if target.resolve().parent != destination.resolve() and destination.resolve() not in target.resolve().parents:
                 raise RuntimeError("Remote snapshot path escapes the destination.")
-        archive.extractall(destination, members=members, filter="data")
+        archive.extractall(destination, members=members)
 
 
 def pull_snapshot(remote: str, destination: Path, *, ssh_options: list[str] | None = None) -> Path:
