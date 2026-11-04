@@ -1,12 +1,14 @@
 import argparse
 from pathlib import Path
 import subprocess
+import sys
 
 from .core import (
     apply_environment,
     plan_restore,
     save_environment,
 )
+from .transfer import export_snapshot_stream, pull_snapshot
 from .detect import detect
 from .diff import compare_manifest_to_system
 
@@ -88,6 +90,13 @@ def main():
     save = sub.add_parser("save")
     save.add_argument("destination", type=Path)
 
+    export = sub.add_parser("export", help="stream a fresh snapshot to stdout (for SSH)")
+    export.add_argument("--stdout", action="store_true", required=True)
+
+    pull = sub.add_parser("pull", help="pull a snapshot from another Linux host over SSH")
+    pull.add_argument("remote", help="SSH destination in user@host form")
+    pull.add_argument("--destination", type=Path, default=Path("~/linux-env-import"))
+
     restore = sub.add_parser("restore")
     restore.add_argument("source", type=Path)
     restore.add_argument("--dry-run", action="store_true")
@@ -121,7 +130,12 @@ def main():
 
     args = parser.parse_args()
 
-    if args.command == "detect":
+    if args.command == "export":
+        export_snapshot_stream(sys.stdout.buffer)
+    elif args.command == "pull":
+        snapshot = pull_snapshot(args.remote, args.destination)
+        print(f"Snapshot received at {snapshot}")
+    elif args.command == "detect":
         for key, value in detect().items():
             print(f"{key}: {value}")
     elif args.command == "save":
